@@ -18,11 +18,7 @@ import io.trino.spi.connector.CatalogSchemaRoutineName;
 import io.trino.spi.connector.CatalogSchemaTableName;
 import io.trino.spi.connector.SchemaTableName;
 import io.trino.spi.function.FunctionKind;
-import io.trino.spi.security.TrinoPrincipal;
-import io.trino.spi.security.Privilege;
-import io.trino.spi.security.SystemAccessControl;
-import io.trino.spi.security.SystemSecurityContext;
-import io.trino.spi.security.ViewExpression;
+import io.trino.spi.security.*;
 import io.trino.spi.type.Type;
 import org.apache.ranger.plugin.classloader.RangerPluginClassLoader;
 
@@ -254,9 +250,8 @@ public class RangerSystemAccessControl
     }
   }
 
-@Override
-  public void checkCanTruncateTable(SystemSecurityContext context, CatalogSchemaTableName table)
-  {
+  @Override
+  public void checkCanTruncateTable(SystemSecurityContext context, CatalogSchemaTableName table) {
     try {
       activatePluginClassLoader();
       systemAccessControlImpl.checkCanTruncateTable(context, table);
@@ -277,11 +272,10 @@ public class RangerSystemAccessControl
 
   @Override
   public void checkCanCreateMaterializedView(SystemSecurityContext context, CatalogSchemaTableName materializedView, Map<String, Object> properties) {
-    try{
+    try {
       activatePluginClassLoader();
-      systemAccessControlImpl.checkCanCreateMaterializedView(context,materializedView,properties);
-    }
-    finally {
+      systemAccessControlImpl.checkCanCreateMaterializedView(context, materializedView, properties);
+    } finally {
       deactivatePluginClassLoader();
     }
 
@@ -289,11 +283,10 @@ public class RangerSystemAccessControl
 
   @Override
   public void checkCanDropMaterializedView(SystemSecurityContext context, CatalogSchemaTableName materializedView) {
-    try{
+    try {
       activatePluginClassLoader();
-      systemAccessControlImpl.checkCanDropMaterializedView(context,materializedView);
-    }
-    finally {
+      systemAccessControlImpl.checkCanDropMaterializedView(context, materializedView);
+    } finally {
       deactivatePluginClassLoader();
     }
   }
@@ -309,8 +302,7 @@ public class RangerSystemAccessControl
   }
 
   @Override
-  public void checkCanSetViewAuthorization(SystemSecurityContext context, CatalogSchemaTableName view, TrinoPrincipal principal)
-  {
+  public void checkCanSetViewAuthorization(SystemSecurityContext context, CatalogSchemaTableName view, TrinoPrincipal principal) {
     try {
       activatePluginClassLoader();
       systemAccessControlImpl.checkCanSetViewAuthorization(context, view, principal);
@@ -412,8 +404,7 @@ public class RangerSystemAccessControl
   }
 
   @Override
-  public void checkCanSetColumnComment(SystemSecurityContext context, CatalogSchemaTableName table)
-  {
+  public void checkCanSetColumnComment(SystemSecurityContext context, CatalogSchemaTableName table) {
     try {
       activatePluginClassLoader();
       systemAccessControlImpl.checkCanSetColumnComment(context, table);
@@ -579,6 +570,18 @@ public class RangerSystemAccessControl
   }
 
   @Override
+  public void checkCanSetTableAuthorization(SystemSecurityContext context, CatalogSchemaTableName table, TrinoPrincipal principal) {
+    {
+      try {
+        activatePluginClassLoader();
+        systemAccessControlImpl.checkCanSetTableAuthorization(context, table, principal);
+      } finally {
+        deactivatePluginClassLoader();
+      }
+    }
+  }
+
+  @Override
   public void checkCanExecuteProcedure(SystemSecurityContext systemSecurityContext, CatalogSchemaRoutineName procedure) {
     try {
       activatePluginClassLoader();
@@ -589,8 +592,7 @@ public class RangerSystemAccessControl
   }
 
   @Override
-  public void checkCanExecuteTableProcedure(SystemSecurityContext systemSecurityContext, CatalogSchemaTableName catalogSchemaTableName, String procedure)
-  {
+  public void checkCanExecuteTableProcedure(SystemSecurityContext systemSecurityContext, CatalogSchemaTableName catalogSchemaTableName, String procedure) {
     try {
       activatePluginClassLoader();
       systemAccessControlImpl.checkCanExecuteTableProcedure(systemSecurityContext, catalogSchemaTableName, procedure);
