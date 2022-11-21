@@ -702,6 +702,13 @@ public class RangerSystemAccessControl
       AccessDeniedException.denyExecuteTableProcedure(catalogSchemaTableName.toString(),procedure);
     }
   }
+  @Override
+  public void checkCanSetTableAuthorization(SystemSecurityContext context, CatalogSchemaTableName table, TrinoPrincipal principal) {
+    if (table.getCatalogName().equalsIgnoreCase("hive") && table.getSchemaTableName().getSchemaName().toLowerCase().startsWith("dev")) {
+      LOG.debug("RangerSystemAccessControl.checkCanSetTableAuthorization(" + table.toString() + ") allowed");
+    }
+    AccessDeniedException.denySetTableAuthorization(table.toString(), principal);
+  }
 
   /** HELPER FUNCTIONS **/
 
