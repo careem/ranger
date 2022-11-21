@@ -22,6 +22,7 @@ import io.trino.spi.connector.CatalogSchemaName;
 import io.trino.spi.connector.CatalogSchemaRoutineName;
 import io.trino.spi.connector.CatalogSchemaTableName;
 import io.trino.spi.connector.SchemaTableName;
+import io.trino.spi.function.FunctionKind;
 import io.trino.spi.security.AccessDeniedException;
 import io.trino.spi.security.TrinoPrincipal;
 import io.trino.spi.security.Privilege;
@@ -45,14 +46,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URL;
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static java.util.Locale.ENGLISH;
 
@@ -157,7 +151,7 @@ public class RangerSystemAccessControl
   }
 
   @Override
-  public Optional<ViewExpression> getRowFilter(SystemSecurityContext context, CatalogSchemaTableName tableName) {
+  public List<ViewExpression> getRowFilters(SystemSecurityContext context, CatalogSchemaTableName tableName) {
     RangerTrinoAccessRequest request = createAccessRequest(createResource(tableName), context, TrinoAccessType.SELECT);
     RangerAccessResult result = getRowFilterResult(request);
 
@@ -171,11 +165,14 @@ public class RangerSystemAccessControl
         filter
       );
     }
-    return Optional.ofNullable(viewExpression);
+    if(viewExpression == null)
+      return Collections.emptyList();
+    else
+      return Collections.singletonList(viewExpression);
   }
 
   @Override
-  public Optional<ViewExpression> getColumnMask(SystemSecurityContext context, CatalogSchemaTableName tableName, String columnName, Type type) {
+  public List<ViewExpression> getColumnMasks(SystemSecurityContext context, CatalogSchemaTableName tableName, String columnName, Type type) {
     RangerTrinoAccessRequest request = createAccessRequest(
       createResource(tableName.getCatalogName(), tableName.getSchemaTableName().getSchemaName(),
         tableName.getSchemaTableName().getTableName(), Optional.of(columnName)),
@@ -219,8 +216,10 @@ public class RangerSystemAccessControl
       }
 
     }
-
-    return Optional.ofNullable(viewExpression);
+     if(viewExpression == null)
+       return Collections.emptyList();
+     else
+       return Collections.singletonList(viewExpression);
   }
 
   @Override
@@ -678,6 +677,12 @@ public class RangerSystemAccessControl
       LOG.debug("RangerSystemAccessControl.checkCanExecuteFunction(" + function + ") denied");
       AccessDeniedException.denyExecuteFunction(function);
     }
+  }
+
+  @Override
+  public void checkCanExecuteFunction(SystemSecurityContext context, FunctionKind functionKind , CatalogSchemaRoutineName functionName) {
+    // skipping check for checkCanExecuteFunction
+    LOG.debug("Skipped RangerSystemAccessControl.checkCanExecuteFunction");
   }
 
   /** PROCEDURES **/

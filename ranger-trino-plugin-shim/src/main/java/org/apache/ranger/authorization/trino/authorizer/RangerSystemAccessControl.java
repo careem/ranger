@@ -17,6 +17,7 @@ import io.trino.spi.connector.CatalogSchemaName;
 import io.trino.spi.connector.CatalogSchemaRoutineName;
 import io.trino.spi.connector.CatalogSchemaTableName;
 import io.trino.spi.connector.SchemaTableName;
+import io.trino.spi.function.FunctionKind;
 import io.trino.spi.security.TrinoPrincipal;
 import io.trino.spi.security.Privilege;
 import io.trino.spi.security.SystemAccessControl;
@@ -27,10 +28,7 @@ import org.apache.ranger.plugin.classloader.RangerPluginClassLoader;
 
 import javax.inject.Inject;
 import java.security.Principal;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class RangerSystemAccessControl
   implements SystemAccessControl {
@@ -517,11 +515,11 @@ public class RangerSystemAccessControl
   }
 
   @Override
-  public Optional<ViewExpression> getRowFilter(SystemSecurityContext context, CatalogSchemaTableName tableName) {
-    Optional<ViewExpression> viewExpression;
+  public List<ViewExpression> getRowFilters(SystemSecurityContext context, CatalogSchemaTableName tableName) {
+    List<ViewExpression> viewExpression;
     try {
       activatePluginClassLoader();
-      viewExpression = systemAccessControlImpl.getRowFilter(context, tableName);
+      viewExpression = systemAccessControlImpl.getRowFilters(context, tableName);
     } finally {
       deactivatePluginClassLoader();
     }
@@ -529,11 +527,11 @@ public class RangerSystemAccessControl
   }
 
   @Override
-  public Optional<ViewExpression> getColumnMask(SystemSecurityContext context, CatalogSchemaTableName tableName, String columnName, Type type) {
-    Optional<ViewExpression> viewExpression;
+  public List<ViewExpression> getColumnMasks(SystemSecurityContext context, CatalogSchemaTableName tableName, String columnName, Type type) {
+    List<ViewExpression> viewExpression;
     try {
       activatePluginClassLoader();
-      viewExpression = systemAccessControlImpl.getColumnMask(context, tableName, columnName, type);
+      viewExpression = systemAccessControlImpl.getColumnMasks(context, tableName, columnName, type);
     } finally {
       deactivatePluginClassLoader();
     }
@@ -606,6 +604,16 @@ public class RangerSystemAccessControl
     try {
       activatePluginClassLoader();
       systemAccessControlImpl.checkCanExecuteFunction(systemSecurityContext, functionName);
+    } finally {
+      deactivatePluginClassLoader();
+    }
+  }
+
+  @Override
+  public void checkCanExecuteFunction(SystemSecurityContext systemSecurityContext, FunctionKind functionKind, CatalogSchemaRoutineName functionName) {
+    try {
+      activatePluginClassLoader();
+      systemAccessControlImpl.checkCanExecuteFunction(systemSecurityContext, functionKind, functionName);
     } finally {
       deactivatePluginClassLoader();
     }

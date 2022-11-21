@@ -37,10 +37,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.security.auth.kerberos.KerberosPrincipal;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class RangerSystemAccessControlTest {
   static RangerSystemAccessControl accessControlManager = null;
@@ -132,7 +129,7 @@ public class RangerSystemAccessControlTest {
     assertEquals(accessControlManager.filterTables(context(alice), aliceCatalog, aliceTables), aliceTables);
     assertEquals(accessControlManager.filterTables(context(bob), "alice-catalog", aliceTables), ImmutableSet.of());
 
-    accessControlManager.checkCanCreateTable(context(alice), aliceTable,Map.of());
+    accessControlManager.checkCanCreateTable(context(alice), aliceTable,Collections.emptyMap());
     accessControlManager.checkCanDropTable(context(alice), aliceTable);
     accessControlManager.checkCanSelectFromColumns(context(alice), aliceTable, ImmutableSet.of());
     accessControlManager.checkCanInsertIntoTable(context(alice), aliceTable);
@@ -141,7 +138,7 @@ public class RangerSystemAccessControlTest {
 
 
     try {
-      accessControlManager.checkCanCreateTable(context(bob), aliceTable,Map.of());
+      accessControlManager.checkCanCreateTable(context(bob), aliceTable,Collections.emptyMap());
     } catch (AccessDeniedException expected) {
     }
   }
@@ -174,15 +171,16 @@ public class RangerSystemAccessControlTest {
     // check {type} / {col} replacement
     final VarcharType varcharType = VarcharType.createVarcharType(20);
 
-    Optional<ViewExpression> ret = accessControlManager.getColumnMask(context(alice), aliceTable, "cast_me", varcharType);
-    assertNotNull(ret.get());
-    assertEquals(ret.get().getExpression(), "cast cast_me as varchar(20)");
+    List<ViewExpression> ret = accessControlManager.getColumnMasks(context(alice), aliceTable, "cast_me", varcharType);
+    assertNotNull(ret.get(0));
+    assertEquals(ret.get(0).getExpression(), "cast cast_me as varchar(20)");
 
-    ret = accessControlManager.getColumnMask(context(alice), aliceTable,"do-not-cast-me", varcharType);
-    assertFalse(ret.isPresent());
+    ret = accessControlManager.getColumnMasks(context(alice), aliceTable,"do-not-cast-me", varcharType);
+    System.out.println("printing  " + ret);
+    assertTrue(ret.isEmpty());
 
-    ret = accessControlManager.getRowFilter(context(alice), aliceTable);
-    assertFalse(ret.isPresent());
+    ret = accessControlManager.getRowFilters(context(alice), aliceTable);
+    assertTrue(ret.isEmpty());
 
     accessControlManager.checkCanExecuteFunction(context(alice), functionName);
     accessControlManager.checkCanGrantExecuteFunctionPrivilege(context(alice), functionName, new TrinoPrincipal(USER, "grantee"), true);
