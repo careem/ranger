@@ -704,7 +704,7 @@ public class RangerSystemAccessControl
   }
   @Override
   public void checkCanSetTableAuthorization(SystemSecurityContext context, CatalogSchemaTableName table, TrinoPrincipal principal) {
-    if (table.getCatalogName().equalsIgnoreCase("hive") && table.getSchemaTableName().getSchemaName().toLowerCase().startsWith("dev")) {
+    if (table.getCatalogName().equalsIgnoreCase("hive") && table.getSchemaTableName().getSchemaName().toLowerCase().startsWith("dev_")) {
       LOG.debug("RangerSystemAccessControl.checkCanSetTableAuthorization(" + table.toString() + ") allowed");
     }
     AccessDeniedException.denySetTableAuthorization(table.toString(), principal);
