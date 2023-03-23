@@ -159,7 +159,7 @@ public class RangerSystemAccessControl
     return result != null && result.isRowFilterEnabled();
   }
 
-  @Override
+
   public Optional<ViewExpression> getRowFilter(SystemSecurityContext context, CatalogSchemaTableName tableName) {
     RangerTrinoAccessRequest request = createAccessRequest(createResource(tableName), context, TrinoAccessType.SELECT);
     RangerAccessResult result = getRowFilterResult(request);
@@ -182,7 +182,7 @@ public class RangerSystemAccessControl
     return getRowFilter(context, tableName).map(ImmutableList::of).orElseGet(ImmutableList::of);
   }
 
-  @Override
+
   public Optional<ViewExpression> getColumnMask(SystemSecurityContext context, CatalogSchemaTableName tableName, String columnName, Type type) {
     RangerTrinoAccessRequest request = createAccessRequest(
       createResource(tableName.getCatalogName(), tableName.getSchemaTableName().getSchemaName(),
