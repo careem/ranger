@@ -43,10 +43,19 @@ import org.apache.ranger.plugin.service.RangerBasePlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableList;
+
 import java.io.IOException;
 import java.net.URL;
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import static java.util.Locale.ENGLISH;
 
@@ -151,7 +160,7 @@ public class RangerSystemAccessControl
   }
 
   @Override
-  public List<ViewExpression> getRowFilters(SystemSecurityContext context, CatalogSchemaTableName tableName) {
+  public Optional<ViewExpression> getRowFilter(SystemSecurityContext context, CatalogSchemaTableName tableName) {
     RangerTrinoAccessRequest request = createAccessRequest(createResource(tableName), context, TrinoAccessType.SELECT);
     RangerAccessResult result = getRowFilterResult(request);
 
@@ -165,14 +174,16 @@ public class RangerSystemAccessControl
         filter
       );
     }
-    if(viewExpression == null)
-      return Collections.emptyList();
-    else
-      return Collections.singletonList(viewExpression);
+    return Optional.ofNullable(viewExpression);
   }
 
   @Override
-  public List<ViewExpression> getColumnMasks(SystemSecurityContext context, CatalogSchemaTableName tableName, String columnName, Type type) {
+  public List<ViewExpression> getRowFilters(SystemSecurityContext context, CatalogSchemaTableName tableName) {
+    return getRowFilter(context, tableName).map(ImmutableList::of).orElseGet(ImmutableList::of);
+  }
+
+  @Override
+  public Optional<ViewExpression> getColumnMask(SystemSecurityContext context, CatalogSchemaTableName tableName, String columnName, Type type) {
     RangerTrinoAccessRequest request = createAccessRequest(
       createResource(tableName.getCatalogName(), tableName.getSchemaTableName().getSchemaName(),
         tableName.getSchemaTableName().getTableName(), Optional.of(columnName)),
@@ -216,10 +227,13 @@ public class RangerSystemAccessControl
       }
 
     }
-     if(viewExpression == null)
-       return Collections.emptyList();
-     else
-       return Collections.singletonList(viewExpression);
+
+    return Optional.ofNullable(viewExpression);
+  }
+
+  @Override
+  public List<ViewExpression> getColumnMasks(SystemSecurityContext context, CatalogSchemaTableName tableName, String columnName, Type type) {
+    return getColumnMask(context, tableName, columnName, type).map(ImmutableList::of).orElseGet(ImmutableList::of);
   }
 
   @Override

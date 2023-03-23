@@ -18,13 +18,21 @@ import io.trino.spi.connector.CatalogSchemaRoutineName;
 import io.trino.spi.connector.CatalogSchemaTableName;
 import io.trino.spi.connector.SchemaTableName;
 import io.trino.spi.function.FunctionKind;
-import io.trino.spi.security.*;
+import io.trino.spi.security.TrinoPrincipal;
+import io.trino.spi.security.Privilege;
+import io.trino.spi.security.SystemAccessControl;
+import io.trino.spi.security.SystemSecurityContext;
+import io.trino.spi.security.ViewExpression;
 import io.trino.spi.type.Type;
 import org.apache.ranger.plugin.classloader.RangerPluginClassLoader;
 
 import javax.inject.Inject;
 import java.security.Principal;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 public class RangerSystemAccessControl
   implements SystemAccessControl {
@@ -250,8 +258,9 @@ public class RangerSystemAccessControl
     }
   }
 
-  @Override
-  public void checkCanTruncateTable(SystemSecurityContext context, CatalogSchemaTableName table) {
+@Override
+  public void checkCanTruncateTable(SystemSecurityContext context, CatalogSchemaTableName table)
+  {
     try {
       activatePluginClassLoader();
       systemAccessControlImpl.checkCanTruncateTable(context, table);
@@ -272,10 +281,11 @@ public class RangerSystemAccessControl
 
   @Override
   public void checkCanCreateMaterializedView(SystemSecurityContext context, CatalogSchemaTableName materializedView, Map<String, Object> properties) {
-    try {
+    try{
       activatePluginClassLoader();
-      systemAccessControlImpl.checkCanCreateMaterializedView(context, materializedView, properties);
-    } finally {
+      systemAccessControlImpl.checkCanCreateMaterializedView(context,materializedView,properties);
+    }
+    finally {
       deactivatePluginClassLoader();
     }
 
@@ -283,10 +293,11 @@ public class RangerSystemAccessControl
 
   @Override
   public void checkCanDropMaterializedView(SystemSecurityContext context, CatalogSchemaTableName materializedView) {
-    try {
+    try{
       activatePluginClassLoader();
-      systemAccessControlImpl.checkCanDropMaterializedView(context, materializedView);
-    } finally {
+      systemAccessControlImpl.checkCanDropMaterializedView(context,materializedView);
+    }
+    finally {
       deactivatePluginClassLoader();
     }
   }
@@ -302,7 +313,8 @@ public class RangerSystemAccessControl
   }
 
   @Override
-  public void checkCanSetViewAuthorization(SystemSecurityContext context, CatalogSchemaTableName view, TrinoPrincipal principal) {
+  public void checkCanSetViewAuthorization(SystemSecurityContext context, CatalogSchemaTableName view, TrinoPrincipal principal)
+  {
     try {
       activatePluginClassLoader();
       systemAccessControlImpl.checkCanSetViewAuthorization(context, view, principal);
@@ -404,7 +416,8 @@ public class RangerSystemAccessControl
   }
 
   @Override
-  public void checkCanSetColumnComment(SystemSecurityContext context, CatalogSchemaTableName table) {
+  public void checkCanSetColumnComment(SystemSecurityContext context, CatalogSchemaTableName table)
+  {
     try {
       activatePluginClassLoader();
       systemAccessControlImpl.checkCanSetColumnComment(context, table);
@@ -506,11 +519,35 @@ public class RangerSystemAccessControl
   }
 
   @Override
-  public List<ViewExpression> getRowFilters(SystemSecurityContext context, CatalogSchemaTableName tableName) {
-    List<ViewExpression> viewExpression;
+  public Optional<ViewExpression> getRowFilter(SystemSecurityContext context, CatalogSchemaTableName tableName) {
+    Optional<ViewExpression> viewExpression;
     try {
       activatePluginClassLoader();
-      viewExpression = systemAccessControlImpl.getRowFilters(context, tableName);
+      viewExpression = systemAccessControlImpl.getRowFilter(context, tableName);
+    } finally {
+      deactivatePluginClassLoader();
+    }
+    return viewExpression;
+  }
+
+  @Override
+  public List<ViewExpression> getRowFilters(SystemSecurityContext context, CatalogSchemaTableName tableName) {
+    List<ViewExpression> viewExpressionList;
+    try {
+      activatePluginClassLoader();
+      viewExpressionList = systemAccessControlImpl.getRowFilters(context, tableName);
+    } finally {
+      deactivatePluginClassLoader();
+    }
+    return viewExpressionList;
+  }
+
+  @Override
+  public Optional<ViewExpression> getColumnMask(SystemSecurityContext context, CatalogSchemaTableName tableName, String columnName, Type type) {
+    Optional<ViewExpression> viewExpression;
+    try {
+      activatePluginClassLoader();
+      viewExpression = systemAccessControlImpl.getColumnMask(context, tableName, columnName, type);
     } finally {
       deactivatePluginClassLoader();
     }
@@ -519,14 +556,14 @@ public class RangerSystemAccessControl
 
   @Override
   public List<ViewExpression> getColumnMasks(SystemSecurityContext context, CatalogSchemaTableName tableName, String columnName, Type type) {
-    List<ViewExpression> viewExpression;
+    List<ViewExpression> viewExpressionList;
     try {
       activatePluginClassLoader();
-      viewExpression = systemAccessControlImpl.getColumnMasks(context, tableName, columnName, type);
+      viewExpressionList = systemAccessControlImpl.getColumnMasks(context, tableName, columnName, type);
     } finally {
       deactivatePluginClassLoader();
     }
-    return viewExpression;
+    return viewExpressionList;
   }
 
   @Override
@@ -592,7 +629,8 @@ public class RangerSystemAccessControl
   }
 
   @Override
-  public void checkCanExecuteTableProcedure(SystemSecurityContext systemSecurityContext, CatalogSchemaTableName catalogSchemaTableName, String procedure) {
+  public void checkCanExecuteTableProcedure(SystemSecurityContext systemSecurityContext, CatalogSchemaTableName catalogSchemaTableName, String procedure)
+  {
     try {
       activatePluginClassLoader();
       systemAccessControlImpl.checkCanExecuteTableProcedure(systemSecurityContext, catalogSchemaTableName, procedure);
