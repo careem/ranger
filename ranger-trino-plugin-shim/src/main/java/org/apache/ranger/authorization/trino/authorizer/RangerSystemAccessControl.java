@@ -17,6 +17,7 @@ import io.trino.spi.connector.CatalogSchemaName;
 import io.trino.spi.connector.CatalogSchemaRoutineName;
 import io.trino.spi.connector.CatalogSchemaTableName;
 import io.trino.spi.connector.SchemaTableName;
+import io.trino.spi.function.FunctionKind;
 import io.trino.spi.security.TrinoPrincipal;
 import io.trino.spi.security.Privilege;
 import io.trino.spi.security.SystemAccessControl;
@@ -518,18 +519,6 @@ public class RangerSystemAccessControl
   }
 
   @Override
-  public Optional<ViewExpression> getRowFilter(SystemSecurityContext context, CatalogSchemaTableName tableName) {
-    Optional<ViewExpression> viewExpression;
-    try {
-      activatePluginClassLoader();
-      viewExpression = systemAccessControlImpl.getRowFilter(context, tableName);
-    } finally {
-      deactivatePluginClassLoader();
-    }
-    return viewExpression;
-  }
-
-  @Override
   public List<ViewExpression> getRowFilters(SystemSecurityContext context, CatalogSchemaTableName tableName) {
     List<ViewExpression> viewExpressionList;
     try {
@@ -539,18 +528,6 @@ public class RangerSystemAccessControl
       deactivatePluginClassLoader();
     }
     return viewExpressionList;
-  }
-
-  @Override
-  public Optional<ViewExpression> getColumnMask(SystemSecurityContext context, CatalogSchemaTableName tableName, String columnName, Type type) {
-    Optional<ViewExpression> viewExpression;
-    try {
-      activatePluginClassLoader();
-      viewExpression = systemAccessControlImpl.getColumnMask(context, tableName, columnName, type);
-    } finally {
-      deactivatePluginClassLoader();
-    }
-    return viewExpression;
   }
 
   @Override
@@ -606,6 +583,18 @@ public class RangerSystemAccessControl
   }
 
   @Override
+  public void checkCanSetTableAuthorization(SystemSecurityContext context, CatalogSchemaTableName table, TrinoPrincipal principal) {
+    {
+      try {
+        activatePluginClassLoader();
+        systemAccessControlImpl.checkCanSetTableAuthorization(context, table, principal);
+      } finally {
+        deactivatePluginClassLoader();
+      }
+    }
+  }
+
+  @Override
   public void checkCanExecuteProcedure(SystemSecurityContext systemSecurityContext, CatalogSchemaRoutineName procedure) {
     try {
       activatePluginClassLoader();
@@ -631,6 +620,16 @@ public class RangerSystemAccessControl
     try {
       activatePluginClassLoader();
       systemAccessControlImpl.checkCanExecuteFunction(systemSecurityContext, functionName);
+    } finally {
+      deactivatePluginClassLoader();
+    }
+  }
+
+  @Override
+  public void checkCanExecuteFunction(SystemSecurityContext systemSecurityContext, FunctionKind functionKind, CatalogSchemaRoutineName functionName) {
+    try {
+      activatePluginClassLoader();
+      systemAccessControlImpl.checkCanExecuteFunction(systemSecurityContext, functionKind, functionName);
     } finally {
       deactivatePluginClassLoader();
     }

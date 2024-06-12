@@ -22,6 +22,7 @@ import io.trino.spi.connector.CatalogSchemaName;
 import io.trino.spi.connector.CatalogSchemaRoutineName;
 import io.trino.spi.connector.CatalogSchemaTableName;
 import io.trino.spi.connector.SchemaTableName;
+import io.trino.spi.function.FunctionKind;
 import io.trino.spi.security.AccessDeniedException;
 import io.trino.spi.security.TrinoPrincipal;
 import io.trino.spi.security.Privilege;
@@ -158,7 +159,7 @@ public class RangerSystemAccessControl
     return result != null && result.isRowFilterEnabled();
   }
 
-  @Override
+
   public Optional<ViewExpression> getRowFilter(SystemSecurityContext context, CatalogSchemaTableName tableName) {
     RangerTrinoAccessRequest request = createAccessRequest(createResource(tableName), context, TrinoAccessType.SELECT);
     RangerAccessResult result = getRowFilterResult(request);
@@ -181,7 +182,7 @@ public class RangerSystemAccessControl
     return getRowFilter(context, tableName).map(ImmutableList::of).orElseGet(ImmutableList::of);
   }
 
-  @Override
+
   public Optional<ViewExpression> getColumnMask(SystemSecurityContext context, CatalogSchemaTableName tableName, String columnName, Type type) {
     RangerTrinoAccessRequest request = createAccessRequest(
       createResource(tableName.getCatalogName(), tableName.getSchemaTableName().getSchemaName(),
@@ -692,6 +693,12 @@ public class RangerSystemAccessControl
     }
   }
 
+  @Override
+  public void checkCanExecuteFunction(SystemSecurityContext context, FunctionKind functionKind , CatalogSchemaRoutineName functionName) {
+    // skipping check for checkCanExecuteFunction
+    LOG.debug("Skipped RangerSystemAccessControl.checkCanExecuteFunction");
+  }
+
   /** PROCEDURES **/
   @Override
   public void checkCanExecuteProcedure(SystemSecurityContext context, CatalogSchemaRoutineName procedure) {
@@ -707,6 +714,14 @@ public class RangerSystemAccessControl
     if (!hasPermission(createResource(catalogSchemaTableName), context, TrinoAccessType.ALTER)) {
       LOG.debug("RangerSystemAccessControl.checkCanExecuteFunction(" + procedure + ") denied");
       AccessDeniedException.denyExecuteTableProcedure(catalogSchemaTableName.toString(),procedure);
+    }
+  }
+  @Override
+  public void checkCanSetTableAuthorization(SystemSecurityContext context, CatalogSchemaTableName table, TrinoPrincipal principal) {
+    if (table.getCatalogName().equalsIgnoreCase("hive") && table.getSchemaTableName().getSchemaName().toLowerCase().startsWith("dev_")) {
+      LOG.debug("RangerSystemAccessControl.checkCanSetTableAuthorization(" + table.toString() + ") allowed");
+    } else {
+      AccessDeniedException.denySetTableAuthorization(table.toString(), principal);
     }
   }
 
